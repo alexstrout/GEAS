@@ -1,0 +1,13 @@
+syntax: glob
+Binaries
+Development/Flash
+Engine
+UDKGame/Build
+UDKGame/Content
+UDKGame/Flash
+UDKGame/Localization
+UDKGame/Logs
+UDKGame/Movies
+UDKGame/ProjectTemplates
+UDKGame/Script
+UDKGame/Splash
