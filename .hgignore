@@ -2,6 +2,7 @@ syntax: glob
 Binaries
 Development/Flash
 Engine
+UDKGame/Autosaves
 UDKGame/Build
 UDKGame/Content
 UDKGame/Flash
