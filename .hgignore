@@ -1,4 +1,5 @@
 syntax: glob
+*.lnk
 Binaries
 Development/Flash
 Engine
