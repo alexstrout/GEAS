@@ -37,7 +37,7 @@ event GainedChild(Actor C)
 
 	//if too many clients, stop accepting new connections
 	if (MaxClients > 0 && NumClients >= MaxClients && LinkState == STATE_Listening) {
-		`log(Self $ ": Maximum number of clients connected, rejecting new clients");
+		`Log(Self $ ": Maximum number of clients connected, rejecting new clients");
 		Close();
 	}
 }
@@ -51,7 +51,7 @@ event LostChild( Actor C )
 
 	//check if there is room for accepting new clients
 	if (NumClients < MaxClients && LinkState != STATE_Listening) {
-		`log(Self $ ": Listening for incoming connections");
+		`Log(Self $ ": Listening for incoming connections");
 		Listen();
 	}
 }

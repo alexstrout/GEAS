@@ -8,6 +8,12 @@ class SimLinkServerChild extends TcpLink;
 var SimPlayerController CC;
 var Vehicle CV;
 
+function LogAndSend(string S)
+{
+	`Log(S);
+	SendText(S);
+}
+
 event Accepted()
 {
 	local NavigationPoint SpawnPoint;
@@ -22,9 +28,9 @@ event Accepted()
 	//Attempt to spawn something
 	SpawnPoint = WorldInfo.Game.FindPlayerStart(None, 255, "");
 	if (SpawnPoint != None)
-		`Log(Self $ ": Successfully found spawn point" @ SpawnPoint);
+		LogAndSend(Self $ ": Successfully found spawn point" @ SpawnPoint);
 	else {
-		`Log(Self $ ": Could not find spawn point! Aborting...");
+		LogAndSend(Self $ ": Could not find spawn point! Aborting...");
 		return;
 	}
 
@@ -33,20 +39,22 @@ event Accepted()
 
 	CC = WorldInfo.Game.Spawn(class'SimPlayerController', , , SpawnLoc, SpawnRot);
 	if (CC != None)
-		`Log(Self $ ": Successfully spawned" @ CC);
+		LogAndSend(Self $ ": Successfully spawned" @ CC);
 	else {
-		`Log(Self $ ": Could not spawn controller! Aborting...");
+		LogAndSend(Self $ ": Could not spawn controller! Aborting...");
 		return;
 	}
 
 	//Give the Controller some room to spawn in
-	SpawnLoc.Z += 1024.0;
+	SpawnLoc.X += (FRand() < 0.5) ? -1024.0 : 1024.0;
+	if (FRand() < 0.66)
+		SpawnLoc.Y += (FRand() < 0.5) ? -1024.0 : 1024.0;
 
 	CV = WorldInfo.Game.Spawn(class'UTVehicle_Manta_Content', , , SpawnLoc, SpawnRot);
 	if (CV != None)
-		`Log(Self $ ": Successfully spawned" @ CV);
+		LogAndSend(Self $ ": Successfully spawned" @ CV);
 	else {
-		`Log(Self $ ": Could not spawn vehicle! Aborting...");
+		LogAndSend(Self $ ": Could not spawn vehicle! Aborting...");
 		return;
 	}
 
@@ -54,14 +62,14 @@ event Accepted()
 	CC.StartSpot = SpawnPoint;
 	WorldInfo.Game.RestartPlayer(CC);
 	if (CC.Pawn != None)
-		`Log(Self $ ": Successfully spawned" @ CC.Pawn);
+		LogAndSend(Self $ ": Successfully spawned" @ CC.Pawn);
 	else {
-		`Log(Self $ ": Could not spawn driver pawn! Aborting...");
+		LogAndSend(Self $ ": Could not spawn driver pawn! Aborting...");
 		return;
 	}
 
 	//Attempt to possess the vehicle
-	SetTimer(1.0, false, 'TimedPossess');
+	TimedPossess();
 }
 function TimedPossess()
 {
@@ -69,7 +77,7 @@ function TimedPossess()
 
 	P = CC.Pawn;
 	if (CV.TryToDrive(P)) {
-		`Log(CC $ ": Successfully possessed" @ CV $ ", destroying" @ P);
+		LogAndSend(CC $ ": Successfully possessed" @ CV $ ", destroying" @ P);
 		P.Destroy();
 	}
 }
@@ -78,14 +86,14 @@ event Closed()
 {
 	`Log(Self $ ": Connection closed");
 
-	if (CC != None) {
-		`Log(Self $ ": Destroying" @ CC);
-		CC.Destroy();
+	if (CV != None) {
+		LogAndSend(Self $ ": Destroying" @ CV);
+		CV.Destroy();
 	}
 
-	if (CV != None) {
-		`Log(Self $ ": Destroying" @ CV);
-		CV.Destroy();
+	if (CC != None) {
+		LogAndSend(Self $ ": Destroying" @ CC);
+		CC.Destroy();
 	}
 
 	Destroy();
@@ -112,7 +120,7 @@ function DoStuff(string Line)
 	In = SimPlayerInput(CC.PlayerInput);
 	switch (Left(Line, 1)) {
 		case "t":
-			In.aForwardOverride = float(Split(Line, " ", true));
+			In.aBaseYOverride = float(Split(Line, " ", true));
 			break;
 		case "s":
 			In.aStrafeOverride = float(Split(Line, " ", true));
@@ -138,7 +146,7 @@ function DoStuff(string Line)
 			@ "rot" @ CV.Rotation
 			@ "vel" @ CV.Velocity
 			@ "(" $ VSize(CV.Velocity) $ ")");
-			SendText("	-- Throttle" @ In.aForwardOverride);
+			SendText("	-- Throttle" @ In.aBaseYOverride);
 			SendText("	-- Strafe  " @ In.aStrafeOverride);
 			SendText("	-- Rise    " @ In.aUpOverride);
 			SendText("	-- X Turn  " @ In.aTurnOverride);

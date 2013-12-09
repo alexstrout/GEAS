@@ -3,32 +3,29 @@
  */
 class SimPlayerInput extends PlayerInput within SimPlayerController;
 
-var float aForwardOverride;
+var float aBaseYOverride;
 var float aStrafeOverride;
 var float aUpOverride;
 var float aTurnOverride;
 var float aLookUpOverride;
 
-function PreProcessInput(float DeltaTime)
+event PlayerInput(float DeltaTime)
 {
-	Super.PreProcessInput(DeltaTime);
-
-	aForward = aForwardOverride;
+	aBaseY = aBaseYOverride;
 	aStrafe = aStrafeOverride;
 	aUp = aUpOverride;
 	aTurn = aTurnOverride;
 	aLookUp = aLookUpOverride;
 
-	//These need to be set again for vehicles
-	RawJoyUp = aForward;
+	//These need to be set for vehicles
+	RawJoyUp = aBaseY;
 	RawJoyRight = aStrafe;
 	RawJoyLookRight = aTurn;
 	RawJoyLookUp = aLookUp;
 
-	//`Log(Self @ "aForward" @ aForward @ "aStrafe" @ aStrafe @ "aUp" @ aUp @ "aTurn" @ aTurn @ "aLookUp" @ aLookUp);
+	//`Log(Self @ "aBaseY" @ aBaseY @ "aStrafe" @ aStrafe @ "aUp" @ aUp @ "aTurn" @ aTurn @ "aLookUp" @ aLookUp);
 }
 
 defaultproperties
 {
-	aForwardOverride=1.0
 }
