@@ -37,6 +37,7 @@ event Accepted()
 	SpawnLoc = SpawnPoint.Location;
 	SpawnRot = SpawnPoint.Rotation;
 
+	//Attempt to spawn the controller
 	CC = WorldInfo.Game.Spawn(class'SimPlayerController', , , SpawnLoc, SpawnRot);
 	if (CC != None)
 		LogAndSend(Self $ ": Successfully spawned" @ CC);
@@ -45,11 +46,9 @@ event Accepted()
 		return;
 	}
 
-	//Give the Controller some room to spawn in
-	SpawnLoc.X += (FRand() < 0.5) ? -1024.0 : 1024.0;
-	if (FRand() < 0.66)
-		SpawnLoc.Y += (FRand() < 0.5) ? -1024.0 : 1024.0;
 
+	//Attempt to spawn the vehicle
+	SpawnLoc.Z += 512.0; //Always give the vehicle some room to spawn in
 	CV = WorldInfo.Game.Spawn(class'UTVehicle_Manta_Content', , , SpawnLoc, SpawnRot);
 	if (CV != None)
 		LogAndSend(Self $ ": Successfully spawned" @ CV);
@@ -58,9 +57,9 @@ event Accepted()
 		return;
 	}
 
-	//Attempt to spawn the controller pawn (which will drive the vehicle)
-	CC.StartSpot = SpawnPoint;
-	WorldInfo.Game.RestartPlayer(CC);
+	//Attempt to spawn the controller pawn (which will drive the vehicle) -- TODO UDKPawn should be fine but it has some bugs with vehicle driving
+	SpawnLoc.Z += 512.0; //Always give the controller pawn some room to spawn in
+	CC.Possess(WorldInfo.Game.Spawn(class'UTPawn', , , SpawnLoc, SpawnRot), false);
 	if (CC.Pawn != None)
 		LogAndSend(Self $ ": Successfully spawned" @ CC.Pawn);
 	else {
@@ -69,17 +68,10 @@ event Accepted()
 	}
 
 	//Attempt to possess the vehicle
-	TimedPossess();
-}
-function TimedPossess()
-{
-	local Pawn P;
+	if (CV.TryToDrive(CC.Pawn))
+		LogAndSend(CC $ ": Successfully possessed" @ CV);
 
-	P = CC.Pawn;
-	if (CV.TryToDrive(P)) {
-		LogAndSend(CC $ ": Successfully possessed" @ CV $ ", destroying" @ P);
-		P.Destroy();
-	}
+	SendText("Awaiting input...");
 }
 
 event Closed()
@@ -87,12 +79,17 @@ event Closed()
 	`Log(Self $ ": Connection closed");
 
 	if (CV != None) {
-		LogAndSend(Self $ ": Destroying" @ CV);
+		`Log(Self $ ": Destroying" @ CV);
 		CV.Destroy();
 	}
 
+	if (CC.Pawn != None) {
+		`Log(Self $ ": Destroying" @ CC.Pawn);
+		CC.Pawn.Destroy();
+	}
+
 	if (CC != None) {
-		LogAndSend(Self $ ": Destroying" @ CC);
+		`Log(Self $ ": Destroying" @ CC);
 		CC.Destroy();
 	}
 
@@ -141,7 +138,7 @@ function DoStuff(string Line)
 		case "x":
 		case "y":
 		case "q":
-			SendText(((CV.Controller != None) ? "* Vehicle" : "	Vehicle") @ CV
+			SendText(((CV.Controller == CC) ? "* Vehicle" : "  Vehicle") @ CV
 			@ "at" @ CV.Location
 			@ "rot" @ CV.Rotation
 			@ "vel" @ CV.Velocity
@@ -154,7 +151,7 @@ function DoStuff(string Line)
 			break;
 		case "i":
 			foreach WorldInfo.AllPawns(class'UTVehicle', V) {
-				SendText(((V.Controller != None) ? "* Vehicle" : "	Vehicle") @ V
+				SendText(((V.Controller == CC) ? "* Vehicle" : "  Vehicle") @ V
 				@ "at" @ V.Location
 				@ "rot" @ V.Rotation
 				@ "vel" @ V.Velocity

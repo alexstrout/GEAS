@@ -9,7 +9,7 @@ var float aUpOverride;
 var float aTurnOverride;
 var float aLookUpOverride;
 
-event PlayerInput(float DeltaTime)
+event PreProcessInput(float DeltaTime)
 {
 	aBaseY = aBaseYOverride;
 	aStrafe = aStrafeOverride;
