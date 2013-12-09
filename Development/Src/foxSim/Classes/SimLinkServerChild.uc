@@ -5,7 +5,7 @@
  */
 class SimLinkServerChild extends TcpLink;
 
-var SimPlayerController CC;
+var SimRemoteController CC;
 var Vehicle CV;
 
 function LogAndSend(string S)
@@ -38,7 +38,7 @@ event Accepted()
 	SpawnRot = SpawnPoint.Rotation;
 
 	//Attempt to spawn the controller
-	CC = WorldInfo.Game.Spawn(class'SimPlayerController', , , SpawnLoc, SpawnRot);
+	CC = WorldInfo.Game.Spawn(class'SimRemoteController', , , SpawnLoc, SpawnRot);
 	if (CC != None)
 		LogAndSend(Self $ ": Successfully spawned" @ CC);
 	else {
@@ -111,10 +111,10 @@ event ReceivedLine(string Line)
 
 function DoStuff(string Line)
 {
-	local SimPlayerInput In;
+	local SimRemoteInput In;
 	local UTVehicle V;
 
-	In = SimPlayerInput(CC.PlayerInput);
+	In = SimRemoteInput(CC.PlayerInput);
 	switch (Left(Line, 1)) {
 		case "t":
 			In.aBaseYOverride = float(Split(Line, " ", true));

@@ -1,7 +1,7 @@
 /*
  * TODO document this
  */
-class SimPlayerController extends PlayerController;
+class SimPlayerController extends UDKPlayerController;
 
 exec function PTest()
 {
@@ -14,5 +14,4 @@ exec function PTest()
 
 defaultproperties
 {
-	InputClass=class'SimPlayerInput'
 }

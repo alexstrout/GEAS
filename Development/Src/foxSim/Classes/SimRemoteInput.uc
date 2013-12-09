@@ -1,7 +1,7 @@
 /*
  * TODO document this
  */
-class SimPlayerInput extends PlayerInput within SimPlayerController;
+class SimRemoteInput extends UDKPlayerInput within SimRemoteController;
 
 var float aBaseYOverride;
 var float aStrafeOverride;
