@@ -5,6 +5,9 @@
  */
 class SimLinkServerChild extends TcpLink;
 
+var vector SpawnLoc;
+var rotator SpawnRot;
+
 var SimRemoteController CC;
 var Vehicle CV;
 
@@ -16,14 +19,16 @@ function LogAndSend(string S)
 
 event Accepted()
 {
-	local NavigationPoint SpawnPoint;
-	local vector SpawnLoc;
-	local rotator SpawnRot;
-
 	`Log(Self $ ": New client connected");
 
 	//TODO Must be set here instead of defaultproperties for some reason
 	LinkMode = MODE_Line;
+
+	SpawnThings();
+}
+function SpawnThings()
+{
+	local NavigationPoint SpawnPoint;
 
 	//Attempt to spawn something
 	SpawnPoint = WorldInfo.Game.FindPlayerStart(None, 255, "");
@@ -37,38 +42,59 @@ event Accepted()
 	SpawnLoc = SpawnPoint.Location;
 	SpawnRot = SpawnPoint.Rotation;
 
+   	SetTimer(0.2, false, 'SpawnController');
+}
+function SpawnController()
+{
 	//Attempt to spawn the controller
-	CC = WorldInfo.Game.Spawn(class'SimRemoteController', , , SpawnLoc, SpawnRot);
-	if (CC != None)
-		LogAndSend(Self $ ": Successfully spawned" @ CC);
-	else {
-		LogAndSend(Self $ ": Could not spawn controller! Aborting...");
-		return;
+	if (CC == None) {
+		CC = WorldInfo.Game.Spawn(class'SimRemoteController', , , SpawnLoc, SpawnRot);
+		if (CC != None)
+			LogAndSend(Self $ ": Successfully spawned" @ CC);
+		else {
+			LogAndSend(Self $ ": Could not spawn controller! Aborting...");
+			return;
+		}
 	}
 
-
+	SetTimer(0.2, false, 'SpawnVehicle');
+}
+function SpawnVehicle()
+{
 	//Attempt to spawn the vehicle
-	SpawnLoc.Z += 512.0; //Always give the vehicle some room to spawn in
-	CV = WorldInfo.Game.Spawn(class'UTVehicle_Manta_Content', , , SpawnLoc, SpawnRot);
-	if (CV != None)
-		LogAndSend(Self $ ": Successfully spawned" @ CV);
-	else {
-		LogAndSend(Self $ ": Could not spawn vehicle! Aborting...");
-		return;
+	if (CV == None) {
+		SpawnLoc.Z += 512.0; //Always give the vehicle some room to spawn in
+		CV = WorldInfo.Game.Spawn(class'UTVehicle_Manta_Content', , , SpawnLoc, SpawnRot);
+		if (CV != None)
+			LogAndSend(Self $ ": Successfully spawned" @ CV);
+		else {
+			LogAndSend(Self $ ": Could not spawn vehicle! Aborting...");
+			return;
+		}
 	}
 
+	SetTimer(0.2, false, 'SpawnPawn');
+}
+function SpawnPawn()
+{
 	//Attempt to spawn the controller pawn (which will drive the vehicle) -- TODO UDKPawn should be fine but it has some bugs with vehicle driving
-	SpawnLoc.Z += 512.0; //Always give the controller pawn some room to spawn in
-	CC.Possess(WorldInfo.Game.Spawn(class'UTPawn', , , SpawnLoc, SpawnRot), false);
-	if (CC.Pawn != None)
-		LogAndSend(Self $ ": Successfully spawned" @ CC.Pawn);
-	else {
-		LogAndSend(Self $ ": Could not spawn driver pawn! Aborting...");
-		return;
+	if (CC.Pawn == None) {
+		SpawnLoc.Z += 512.0; //Always give the controller pawn some room to spawn in
+		CC.Possess(WorldInfo.Game.Spawn(class'UTPawn', , , SpawnLoc, SpawnRot), false);
+		if (CC.Pawn != None)
+			LogAndSend(Self $ ": Successfully spawned" @ CC.Pawn);
+		else {
+			LogAndSend(Self $ ": Could not spawn driver pawn! Aborting...");
+			return;
+		}
 	}
 
+	SetTimer(0.2, false, 'PossessVehicle');
+}
+function PossessVehicle()
+{
 	//Attempt to possess the vehicle
-	if (CV.TryToDrive(CC.Pawn))
+	if (CC.Pawn != None && CC.Pawn != CV && CV.TryToDrive(CC.Pawn))
 		LogAndSend(CC $ ": Successfully possessed" @ CV);
 
 	SendText("Awaiting input... (? for help)");
@@ -80,12 +106,8 @@ event Closed()
 
 	if (CV != None) {
 		`Log(Self $ ": Destroying" @ CV);
-		CV.Destroy();
-	}
-
-	if (CC.Pawn != None) {
-		`Log(Self $ ": Destroying" @ CC.Pawn);
-		CC.Pawn.Destroy();
+		CV.DriverLeave(true);
+		CV.Suicide(); //Blow it up instead of disappearing :)
 	}
 
 	if (CC != None) {
@@ -114,6 +136,10 @@ function DoStuff(string Line)
 	local SimRemoteInput In;
 	local UTVehicle V;
 
+	//If our vehicle somehow blows up, try and spawn another one
+	if (CV == None || CC == None || CC.Pawn == None)
+		SpawnThings();
+
 	//Input
 	In = SimRemoteInput(CC.PlayerInput);
 	switch (Left(Line, 1)) {
@@ -132,7 +158,7 @@ function DoStuff(string Line)
 		case "y":
 			In.aLookUpOverride = float(Split(Line, " ", true)) / 100.0;
 	}
-	
+
 	//Output
 	switch (Left(Line, 1)) {
 		case "?":
