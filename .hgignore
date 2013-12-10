@@ -4,8 +4,10 @@ syntax: glob
 Binaries
 Development/Flash
 Engine
+UDKGame/*.txt
 UDKGame/Autosaves
 UDKGame/Build
+UDKGame/Cloud
 UDKGame/Config
 UDKGame/Content
 UDKGame/CookedPC
