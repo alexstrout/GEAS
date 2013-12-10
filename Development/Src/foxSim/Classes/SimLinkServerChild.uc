@@ -71,7 +71,7 @@ event Accepted()
 	if (CV.TryToDrive(CC.Pawn))
 		LogAndSend(CC $ ": Successfully possessed" @ CV);
 
-	SendText("Awaiting input...");
+	SendText("Awaiting input... (? for help)");
 }
 
 event Closed()
@@ -114,24 +114,30 @@ function DoStuff(string Line)
 	local SimRemoteInput In;
 	local UTVehicle V;
 
+	//Input
 	In = SimRemoteInput(CC.PlayerInput);
 	switch (Left(Line, 1)) {
 		case "t":
-			In.aBaseYOverride = float(Split(Line, " ", true));
+			In.aBaseYOverride = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "s":
-			In.aStrafeOverride = float(Split(Line, " ", true));
+			In.aStrafeOverride = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "r":
-			In.aUpOverride = float(Split(Line, " ", true));
+			In.aUpOverride = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "x":
-			In.aTurnOverride = float(Split(Line, " ", true));
+			In.aTurnOverride = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "y":
-			In.aLookUpOverride = float(Split(Line, " ", true));
+			In.aLookUpOverride = float(Split(Line, " ", true)) / 100.0;
 	}
+	
+	//Output
 	switch (Left(Line, 1)) {
+		case "?":
+			SendHelp();
+			break;
 		case "t":
 		case "s":
 		case "r":
@@ -161,6 +167,18 @@ function DoStuff(string Line)
 		default:
 			SendText("Huh?");
 	}
+}
+
+function SendHelp()
+{
+	SendText("t [-100...100] Set Throttle");
+	SendText("s [-100...100] Set Strafe");
+	SendText("r [-100...100] Set Rise");
+	SendText("x [-100...100] Set X Turn");
+	SendText("y [-100...100] Set Y Turn");
+	SendText("q              Query Info on Current Vehicle");
+	SendText("i              List All Vehicles");
+	SendText("?              This Help");
 }
 
 defaultproperties

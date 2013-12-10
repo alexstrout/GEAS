@@ -1,4 +1,5 @@
 syntax: glob
+*.exe
 *.lnk
 Binaries
 Development/Flash
@@ -7,11 +8,13 @@ UDKGame/Autosaves
 UDKGame/Build
 UDKGame/Config
 UDKGame/Content
+UDKGame/CookedPC
 UDKGame/Flash
 UDKGame/Localization
 UDKGame/Logs
 UDKGame/Movies
 UDKGame/PreProcessedFiles
 UDKGame/ProjectTemplates
+UDKGame/Screenshots
 UDKGame/Script
 UDKGame/Splash
