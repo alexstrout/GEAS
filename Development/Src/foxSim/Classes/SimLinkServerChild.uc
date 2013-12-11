@@ -149,6 +149,10 @@ function DoStuff(string Line)
 	switch (Left(Line, 1)) {
 		case "p":
 			//Reserved for testing
+			if (float(Split(Line, " ", true)) > 0)
+				SetTimer(3.0 * FRand() + 1.0, true, 'RandomizeInputs');
+			else
+				ClearTimer('RandomizeInputs');
 			break;
 		case "t":
 			In.aVThrottle = float(Split(Line, " ", true)) / 100.0;
@@ -219,6 +223,24 @@ function SendHelp()
 	SendText("q              Query Info on Current Vehicle");
 	SendText("i              List All Vehicles");
 	SendText("?              This Help");
+}
+
+function RandomizeInputs()
+{
+	local SimRemoteInput In;
+
+	In = SimRemoteInput(SimC.PlayerInput);
+	if (In == None)
+		return;
+
+	In.aVThrottle = 2.0 * FRand() - 1.0;
+	In.aVStrafe = 2.0 * FRand() - 1.0;
+	In.aVRise = 2.0 * FRand() - 1.0;
+	In.aVYaw = 2.0 * FRand() - 1.0;
+	In.aVPitch = 2.0 * FRand() - 1.0;
+	In.aVRoll = 2.0 * FRand() - 1.0;
+
+	DoStuff("q");
 }
 
 defaultproperties
