@@ -8,8 +8,8 @@ class SimLinkServerChild extends TcpLink;
 var vector SpawnLoc;
 var rotator SpawnRot;
 
-var SimRemoteController CC;
-var Vehicle CV;
+var SimRemoteController SimC;
+var SimVehicle SimV;
 
 function LogAndSend(string S)
 {
@@ -47,10 +47,10 @@ function SpawnThings()
 function SpawnController()
 {
 	//Attempt to spawn the controller
-	if (CC == None) {
-		CC = WorldInfo.Game.Spawn(class'SimRemoteController', , , SpawnLoc, SpawnRot);
-		if (CC != None)
-			LogAndSend(Self $ ": Successfully spawned" @ CC);
+	if (SimC == None) {
+		SimC = WorldInfo.Game.Spawn(class'SimRemoteController', , , SpawnLoc, SpawnRot);
+		if (SimC != None)
+			LogAndSend(Self $ ": Successfully spawned" @ SimC);
 		else {
 			LogAndSend(Self $ ": Could not spawn controller! Aborting...");
 			return;
@@ -62,11 +62,11 @@ function SpawnController()
 function SpawnVehicle()
 {
 	//Attempt to spawn the vehicle
-	if (CV == None) {
+	if (SimV == None || SimV.Health < 0 || SimV.bDeleteMe) {
 		SpawnLoc.Z += 512.0; //Always give the vehicle some room to spawn in
-		CV = WorldInfo.Game.Spawn(class'UTVehicle_Manta_Content', , , SpawnLoc, SpawnRot);
-		if (CV != None)
-			LogAndSend(Self $ ": Successfully spawned" @ CV);
+		SimV = WorldInfo.Game.Spawn(class'SimVehicle', , , SpawnLoc, SpawnRot);
+		if (SimV != None)
+			LogAndSend(Self $ ": Successfully spawned" @ SimV);
 		else {
 			LogAndSend(Self $ ": Could not spawn vehicle! Aborting...");
 			return;
@@ -77,12 +77,12 @@ function SpawnVehicle()
 }
 function SpawnPawn()
 {
-	//Attempt to spawn the controller pawn (which will drive the vehicle) -- TODO UDKPawn should be fine but it has some bugs with vehicle driving
-	if (CC.Pawn == None) {
+	//Attempt to spawn the controller pawn (which will drive the vehicle)
+	if (SimC.Pawn == None) {
 		SpawnLoc.Z += 512.0; //Always give the controller pawn some room to spawn in
-		CC.Possess(WorldInfo.Game.Spawn(class'UTPawn', , , SpawnLoc, SpawnRot), false);
-		if (CC.Pawn != None)
-			LogAndSend(Self $ ": Successfully spawned" @ CC.Pawn);
+		SimC.Possess(WorldInfo.Game.Spawn(class'SimPawn', , , SpawnLoc, SpawnRot), false);
+		if (SimC.Pawn != None)
+			LogAndSend(Self $ ": Successfully spawned" @ SimC.Pawn);
 		else {
 			LogAndSend(Self $ ": Could not spawn driver pawn! Aborting...");
 			return;
@@ -94,8 +94,8 @@ function SpawnPawn()
 function PossessVehicle()
 {
 	//Attempt to possess the vehicle
-	if (CC.Pawn != None && CC.Pawn != CV && CV.TryToDrive(CC.Pawn))
-		LogAndSend(CC $ ": Successfully possessed" @ CV);
+	if (SimC.Pawn != None && SimC.Pawn != SimV && SimV.TryToDrive(SimC.Pawn))
+		LogAndSend(SimC $ ": Successfully possessed" @ SimV);
 
 	SendText("Awaiting input... (? for help)");
 }
@@ -104,15 +104,15 @@ event Closed()
 {
 	`Log(Self $ ": Connection closed");
 
-	if (CV != None) {
-		`Log(Self $ ": Destroying" @ CV);
-		CV.DriverLeave(true);
-		CV.Suicide(); //Blow it up instead of disappearing :)
+	if (SimV != None) {
+		`Log(Self $ ": Destroying" @ SimV);
+		SimV.DriverLeave(true);
+		SimV.Suicide(); //Blow it up instead of disappearing :)
 	}
 
-	if (CC != None) {
-		`Log(Self $ ": Destroying" @ CC);
-		CC.Destroy();
+	if (SimC != None) {
+		`Log(Self $ ": Destroying" @ SimC);
+		SimC.Destroy();
 	}
 
 	Destroy();
@@ -134,29 +134,39 @@ event ReceivedLine(string Line)
 function DoStuff(string Line)
 {
 	local SimRemoteInput In;
-	local UTVehicle V;
+	local SimVehicle V;
 
 	//If our vehicle somehow blows up, try and spawn another one
-	if (CV == None || CC == None || CC.Pawn == None)
+	if (SimV == None || SimV.Health < 0 || SimV.bDeleteMe
+	|| SimC == None || SimC.Pawn == None)
 		SpawnThings();
 
+	In = SimRemoteInput(SimC.PlayerInput);
+	if (In == None)
+		return;
+
 	//Input
-	In = SimRemoteInput(CC.PlayerInput);
 	switch (Left(Line, 1)) {
+		case "p":
+			//Reserved for testing
+			break;
 		case "t":
-			In.aBaseYOverride = float(Split(Line, " ", true)) / 100.0;
+			In.aVThrottle = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "s":
-			In.aStrafeOverride = float(Split(Line, " ", true)) / 100.0;
+			In.aVStrafe = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "r":
-			In.aUpOverride = float(Split(Line, " ", true)) / 100.0;
+			In.aVRise = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "x":
-			In.aTurnOverride = float(Split(Line, " ", true)) / 100.0;
+			In.aVYaw = float(Split(Line, " ", true)) / 100.0;
 			break;
 		case "y":
-			In.aLookUpOverride = float(Split(Line, " ", true)) / 100.0;
+			In.aVPitch = float(Split(Line, " ", true)) / 100.0;
+			break;
+		case "z":
+			In.aVRoll = float(Split(Line, " ", true)) / 100.0;
 	}
 
 	//Output
@@ -164,26 +174,29 @@ function DoStuff(string Line)
 		case "?":
 			SendHelp();
 			break;
+		case "p":
 		case "t":
 		case "s":
 		case "r":
 		case "x":
 		case "y":
+		case "z":
 		case "q":
-			SendText(((CV.Controller == CC) ? "* Vehicle" : "  Vehicle") @ CV
-			@ "at" @ CV.Location
-			@ "rot" @ CV.Rotation
-			@ "vel" @ CV.Velocity
-			@ "(" $ VSize(CV.Velocity) $ ")");
-			SendText("	-- Throttle" @ In.aBaseYOverride);
-			SendText("	-- Strafe  " @ In.aStrafeOverride);
-			SendText("	-- Rise    " @ In.aUpOverride);
-			SendText("	-- X Turn  " @ In.aTurnOverride);
-			SendText("	-- Y Turn  " @ In.aLookUpOverride);
+			SendText(((SimV.Controller == SimC) ? "* Vehicle" : "  Vehicle") @ SimV
+			@ "at" @ SimV.Location
+			@ "rot" @ SimV.Rotation
+			@ "vel" @ SimV.Velocity
+			@ "(" $ VSize(SimV.Velocity) $ ")");
+			SendText("	-- Throttle" @ In.aVThrottle);
+			SendText("	-- Strafe  " @ In.aVStrafe);
+			SendText("	-- Rise    " @ In.aVRise);
+			SendText("	-- Yaw     " @ In.aVYaw);
+			SendText("	-- Pitch   " @ In.aVPitch);
+			SendText("	-- Roll    " @ In.aVRoll);
 			break;
 		case "i":
-			foreach WorldInfo.AllPawns(class'UTVehicle', V) {
-				SendText(((V.Controller == CC) ? "* Vehicle" : "  Vehicle") @ V
+			foreach WorldInfo.AllPawns(class'SimVehicle', V) {
+				SendText(((V.Controller == SimC) ? "* Vehicle" : "  Vehicle") @ V
 				@ "at" @ V.Location
 				@ "rot" @ V.Rotation
 				@ "vel" @ V.Velocity
@@ -200,8 +213,9 @@ function SendHelp()
 	SendText("t [-100...100] Set Throttle");
 	SendText("s [-100...100] Set Strafe");
 	SendText("r [-100...100] Set Rise");
-	SendText("x [-100...100] Set X Turn");
-	SendText("y [-100...100] Set Y Turn");
+	SendText("x [-100...100] Set X Turn (Yaw)");
+	SendText("y [-100...100] Set Y Turn (Pitch)");
+	SendText("z [-100...100] Set Z Turn (Roll)");
 	SendText("q              Query Info on Current Vehicle");
 	SendText("i              List All Vehicles");
 	SendText("?              This Help");

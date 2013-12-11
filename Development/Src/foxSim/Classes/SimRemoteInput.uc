@@ -3,19 +3,20 @@
  */
 class SimRemoteInput extends UDKPlayerInput within SimRemoteController;
 
-var float aBaseYOverride;
-var float aStrafeOverride;
-var float aUpOverride;
-var float aTurnOverride;
-var float aLookUpOverride;
+var float aVThrottle;
+var float aVStrafe;
+var float aVRise;
+var float aVYaw;
+var float aVPitch;
+var float aVRoll;
 
 event PreProcessInput(float DeltaTime)
 {
-	aBaseY = aBaseYOverride;
-	aStrafe = aStrafeOverride;
-	aUp = aUpOverride;
-	aTurn = aTurnOverride;
-	aLookUp = aLookUpOverride;
+	aBaseY = aVThrottle;
+	aStrafe = aVStrafe;
+	aUp = aVRise;
+	aTurn = aVYaw;
+	aLookUp = aVPitch;
 
 	//These need to be set for vehicles
 	RawJoyUp = aBaseY;
