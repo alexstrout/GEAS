@@ -3,6 +3,18 @@
  */
 class SimVehicle extends UTVehicle_Cicada_Content;
 
+//Set proper physics when exploding
+function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
+{
+	if (Super.Died(Killer, DamageType, HitLocation)) {
+		//SetMovementPhysics();
+		SetPhysics(PHYS_Swimming);
+		return true;
+	}
+
+	return false;
+}
+
 defaultproperties
 {
 	//Don't allow vehicles to take water damage
