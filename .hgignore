@@ -4,6 +4,7 @@ syntax: glob
 Binaries
 Development/Flash
 Engine
+SimContent
 UDKGame/*.txt
 UDKGame/Autosaves
 UDKGame/Build
