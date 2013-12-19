@@ -1,6 +1,6 @@
 /**
  * SimSensorGPS - GEAS 2013, Alex Strout
- * Returns GPS-related info based on mode:
+ * Return our owner's GPS-related info based on mode:
  * 0 - Position (XYZ Tuple)
  * 1 - Rotation (XYZ Tuple)
  * 2 - Velocity (XYZ Tuple)

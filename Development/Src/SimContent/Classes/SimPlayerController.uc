@@ -1,19 +1,24 @@
-/*
- * TODO document this
+/**
+ * SimPlayerController - GEAS 2013, Alex Strout
+ * Defines functionality for the Unreal client's "view" of the world
+ * Mostly extensions for the "spectator mode" free-floating camera
+ * Not really important, just ignore this :)
  */
 class SimPlayerController extends UDKPlayerController;
 
 //For GetPlayerViewPoint
 var float LastGetViewPointTime;
 
+//Override the HUD to always display on-screen debug info
+//See Engine::PlayerController.ClientSetHUD()
 reliable client function ClientSetHUD(class<HUD> newHUDType)
 {
 	Super.ClientSetHUD(newHUDType);
-
 	if (myHUD != None)
 		myHUD.bShowDebugInfo = true;
 }
 
+//Console test function - if our client is not a spectator, running this via console will possess the first available vehicle
 exec function PTest()
 {
 	local Vehicle V;
@@ -23,14 +28,20 @@ exec function PTest()
 			return;
 }
 
-//Allow UT-style free-cam... sorta -- TODO make not awful
+//Camera position and orientation is determined by out parameters OutLocation and OutRotation
+//When viewing another pawn in spectator mode, our view rotation is normally locked to theirs
+//To allow looking around with the mouse instead, we'll force OutRotation to our controller's rotation
+//See Engine::PlayerController.GetPlayerViewPoint()
 simulated event GetPlayerViewPoint(out Vector OutLocation, out Rotator OutRotation)
 {
 	Super.GetPlayerViewPoint(OutLocation, OutRotation);
 	OutRotation = Rotation;
 }
 
-//Use UT-style ViewSelf so our camera doesn't snap back to its previous position when no longer spectating a vehicle
+//Normally, when viewing another pawn as a spectator and then returning to our own spectator camera,
+//the camera snaps back to the location we started viewing the other pawn at. So instead, we'll implement
+//a ServerViewSelf method that is more like UTPlayerController's
+//See Engine::PlayerController.ServerViewSelf() and UTGame::UTPlayerController.ServerViewSelf()
 unreliable server function ServerViewSelf(optional ViewTargetTransitionParams TransitionParams)
 {
 	local Vector OutLocation;
@@ -44,6 +55,7 @@ unreliable server function ServerViewSelf(optional ViewTargetTransitionParams Tr
 	ClientSetViewTarget(Self, TransitionParams);
 }
 
+//Spectator mode overrides
 state Spectating
 {
 	//Do not allow spectator to go below KillZ, but allow above StallZ
@@ -56,7 +68,7 @@ state Spectating
 		return false;
 	}
 
-	//Use scroll-wheel to switch targets UT-style
+	//Use scroll-wheel to switch targets similarly to UTPlayerController
 	//exec function StartFire(optional byte FireModeNum) {}
 	exec function PrevWeapon()
 	{

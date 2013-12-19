@@ -1,5 +1,11 @@
-/*
- * TODO document this
+/**
+
+ * TODO FINISH DOCUMENTING THIS
+
+ * SimRemoteController - GEAS 2013, Alex Strout
+ * Defines functionality for the socket connection's in-world controller
+ * This directly controls the in-game AUV it's bound to based on input from the socket class
+ * It also reports requested information back to the socket class
  */
 class SimRemoteController extends UDKPlayerController;
 
@@ -119,27 +125,27 @@ state PlayerDriving
 // 	{
 // 		Pawn.Acceleration = NewAccel;
 // 	}
-// 
+//
 // 	function PlayerMove(float DeltaTime)
 // 	{
 // 		local Rotator OldRotation;
 // 		local Vector X,Y,Z, NewAccel;
 // 		local SimRemoteInput In;
-// 
+//
 // 		In = SimRemoteInput(PlayerInput);
 // 		if (In == None)
 // 			return;
-// 
+//
 // 		if (Pawn == None)
 // 			GotoState('Dead');
 // 		else {
 // 			GetAxes(Rotation,X,Y,Z);
-// 
+//
 // 			NewAccel = Pawn.AccelRate * Normal(In.aVThrottle * X + In.aVStrafe * Y + In.aVRise * vect(0,0,1));
-// 
+//
 // 			OldRotation = Rotation;
 // 			UpdateRotation(DeltaTime);
-// 
+//
 // 			ProcessMove(DeltaTime, NewAccel, DCLICK_None, OldRotation - Rotation);
 // 			bPressedJump = false;
 // 		}
@@ -154,7 +160,7 @@ state PlayerDriving
 // 			GotoState(Pawn.LandMovementState);
 // 		ClearTimer();
 // 	}
-// 
+//
 // 	event BeginState(Name PreviousStateName)
 // 	{
 // 		CleanOutSavedMoves();

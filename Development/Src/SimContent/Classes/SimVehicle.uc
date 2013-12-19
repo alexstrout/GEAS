@@ -1,5 +1,10 @@
-/*
- * TODO document this
+/**
+
+ * TODO FINISH DOCUMENTING THIS
+
+ * SimVehicle - GEAS 2013, Alex Strout
+ * The actual "physical" AUV object
+ * TODO blah blah etc.
  */
 class SimVehicle extends UTVehicle_Cicada_Content;
 

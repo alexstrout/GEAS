@@ -1,5 +1,9 @@
-/*
- * TODO document this
+/**
+
+ * TODO FINISH DOCUMENTING THIS
+
+ * SimRemoteInput - GEAS 2013, Alex Strout
+ * Handles the actual input for our controller
  */
 class SimRemoteInput extends UDKPlayerInput within SimRemoteController;
 
