@@ -122,96 +122,29 @@ event ReceivedLine(string Line)
 {
 	`Log(Self $ ": Received line:" @ Line);
 
+	//If our vehicle somehow blew up, try and spawn another one
+	if (SimV == None || SimV.Health < 0 || SimV.bDeleteMe
+	|| SimC == None || SimC.Pawn == None)
+		SpawnThings();
+
+	//Possibly close by request
 	if (Line ~= "close") {
 		SendText("Closing by request");
 		Close();
 		return;
 	}
 
-	DoStuff(Line);
-}
-
-function DoStuff(string Line)
-{
-	local SimRemoteInput In;
-	local SimVehicle V;
-
-	//If our vehicle somehow blows up, try and spawn another one
-	if (SimV == None || SimV.Health < 0 || SimV.bDeleteMe
-	|| SimC == None || SimC.Pawn == None)
-		SpawnThings();
-
-	In = SimRemoteInput(SimC.PlayerInput);
-	if (In == None)
+	//Send help if needed
+	if (Left(Line, 1) == "?") {
+		SendHelp();
 		return;
-
-	//Input
-	switch (Left(Line, 1)) {
-		case "p":
-			//Reserved for testing
-			if (float(Split(Line, " ", true)) > 0)
-				SetTimer(3.0 * FRand() + 1.0, true, 'RandomizeInputs');
-			else
-				ClearTimer('RandomizeInputs');
-			break;
-		case "t":
-			In.aVThrottle = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "s":
-			In.aVStrafe = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "r":
-			In.aVRise = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "x":
-			In.aVYaw = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "y":
-			In.aVPitch = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "z":
-			In.aVRoll = float(Split(Line, " ", true)) / 100.0;
 	}
 
-	//Output
-	switch (Left(Line, 1)) {
-		case "?":
-			SendHelp();
-			break;
-		case "p":
-		case "t":
-		case "s":
-		case "r":
-		case "x":
-		case "y":
-		case "z":
-		case "q":
-			SendText(((SimV.Controller == SimC) ? "* Vehicle" : "  Vehicle") @ SimV
-			@ "at" @ SimV.Location
-			@ "rot" @ SimV.Rotation
-			@ "vel" @ SimV.Velocity
-			@ "(" $ VSize(SimV.Velocity) $ ")");
-			SendText("	-- Throttle" @ In.aVThrottle);
-			SendText("	-- Strafe  " @ In.aVStrafe);
-			SendText("	-- Rise    " @ In.aVRise);
-			SendText("	-- Yaw     " @ In.aVYaw);
-			SendText("	-- Pitch   " @ In.aVPitch);
-			SendText("	-- Roll    " @ In.aVRoll);
-			break;
-		case "i":
-			foreach WorldInfo.AllPawns(class'SimVehicle', V) {
-				SendText(((V.Controller == SimC) ? "* Vehicle" : "  Vehicle") @ V
-				@ "at" @ V.Location
-				@ "rot" @ V.Rotation
-				@ "vel" @ V.Velocity
-				@ "(" $ VSize(V.Velocity) $ ")");
-			}
-			break;
-		default:
-			SendText("Huh?");
-	}
+	//Not one of the above? Send it to our SimRemoteController as input
+	SimC.ResolveInputs(Self, Line);
 }
 
+//Help function - this should match what's supported in SimRemoteController / SimRemoteInput
 function SendHelp()
 {
 	SendText("t [-100...100] Set Throttle");
@@ -223,24 +156,6 @@ function SendHelp()
 	SendText("q              Query Info on Current Vehicle");
 	SendText("i              List All Vehicles");
 	SendText("?              This Help");
-}
-
-function RandomizeInputs()
-{
-	local SimRemoteInput In;
-
-	In = SimRemoteInput(SimC.PlayerInput);
-	if (In == None)
-		return;
-
-	In.aVThrottle = 2.0 * FRand() - 1.0;
-	In.aVStrafe = 2.0 * FRand() - 1.0;
-	In.aVRise = 2.0 * FRand() - 1.0;
-	In.aVYaw = 2.0 * FRand() - 1.0;
-	In.aVPitch = 2.0 * FRand() - 1.0;
-	In.aVRoll = 2.0 * FRand() - 1.0;
-
-	DoStuff("q");
 }
 
 defaultproperties
