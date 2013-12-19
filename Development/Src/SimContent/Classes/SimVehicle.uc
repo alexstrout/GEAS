@@ -1,18 +1,18 @@
 /**
-
- * TODO FINISH DOCUMENTING THIS
-
  * SimVehicle - GEAS 2013, Alex Strout
  * The actual "physical" AUV object
- * TODO blah blah etc.
+ * Simply an extension of an existing sample vehicle (in this case, the "Cicada" sample vehicle)
+ * Mostly changes to vehicle handling etc. values in defaultproperties block to suit being underwater (vehicles normally blow up underwater)
+ * Also contains sensors that may be queried
  */
 class SimVehicle extends UTVehicle_Cicada_Content;
 
-//Sensors for this vehicle
+//Sensors for this vehicle - see defaultproperties block below
 var SimSensorGPS SensorGPS;
 var SimSensorDepth SensorDepth;
 
-//Query general info about this vehicle using sensors
+//Query general info about this vehicle using sensors in a nicely formatted statement
+//See SimContent::SimSensor*.Query() for info on querying specific sensors
 function string QueryInfo()
 {
 	return Self @ "at" @ SensorGPS.Query(0)
@@ -23,6 +23,7 @@ function string QueryInfo()
 }
 
 //Set proper physics when exploding
+//See Engine::Pawn.Died() and Engine::Vehicle.Died()
 function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
 	if (Super.Died(Killer, DamageType, HitLocation)) {
@@ -36,16 +37,21 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 
 defaultproperties
 {
-	Begin Object class=SimSensorGPS Name=SenGPS
+	//Add a SimSensorGPS as an attached component
+	Begin Object class=SimSensorGPS name=SenGPS
+		//defaultproperties for components (if any) may be defined here
+		//See Engine::Pawn::defaultproperties for good examples of component definitions
 	End Object
 	Components.Add(SenGPS)
-	SensorGPS=SenGPS
+	SensorGPS=SenGPS //We don't have to explicitly carry a reference for this (we could loop components instead), but it's convenient
 
-	Begin Object class=SimSensorDepth Name=SenDepth
+	//Do the same for SimSensorDepth
+	Begin Object class=SimSensorDepth name=SenDepth
 	End Object
 	Components.Add(SenDepth)
 	SensorDepth=SenDepth
 
+	//Now for vehicle attributes
 	//Don't allow vehicles to take water damage
 	WaterDamage=0
 	bTakeWaterDamageWhileDriving=false
@@ -73,8 +79,9 @@ defaultproperties
 	bCanFly=false
 	bJostleWhileDriving=false
 // 	bFloatWhenDriven=false
-
+//
 // 	//Allow rolling
+// 	//TODO this currently allows the vehicle to flip extremely easily; vehicle handling needs some work
 // 	bMustBeUpright=false
 // 	bStayUpright=false
 // 	RotationRate=(Pitch=20000,Yaw=20000,Roll=20000)
