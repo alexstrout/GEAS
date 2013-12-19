@@ -3,6 +3,20 @@
  */
 class SimVehicle extends UTVehicle_Cicada_Content;
 
+//Sensors for this vehicle
+var SimSensorGPS SensorGPS;
+var SimSensorDepth SensorDepth;
+
+//Query general info about this vehicle using sensors
+function string QueryInfo()
+{
+	return Self @ "at" @ SensorGPS.Query(0)
+	@ "depth" @ SensorDepth.Query()
+	@ "rot" @ SensorGPS.Query(1)
+	@ "vel" @ SensorGPS.Query(2)
+	@ "(" $ SensorGPS.Query(3) $ ")";
+}
+
 //Set proper physics when exploding
 function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLocation)
 {
@@ -17,6 +31,16 @@ function bool Died(Controller Killer, class<DamageType> DamageType, vector HitLo
 
 defaultproperties
 {
+	Begin Object class=SimSensorGPS Name=SenGPS
+	End Object
+	Components.Add(SenGPS)
+	SensorGPS=SenGPS
+
+	Begin Object class=SimSensorDepth Name=SenDepth
+	End Object
+	Components.Add(SenDepth)
+	SensorDepth=SenDepth
+
 	//Don't allow vehicles to take water damage
 	WaterDamage=0
 	bTakeWaterDamageWhileDriving=false

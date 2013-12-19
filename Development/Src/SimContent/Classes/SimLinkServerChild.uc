@@ -153,7 +153,9 @@ function SendHelp()
 	SendText("x [-100...100] Set X Turn (Yaw)");
 	SendText("y [-100...100] Set Y Turn (Pitch)");
 	SendText("z [-100...100] Set Z Turn (Roll)");
-	SendText("q              Query Info on Current Vehicle");
+	SendText("q              Query Vehicle Info");
+	SendText("g [0...3]      Query GPS [0: Loc, 1: Rot, 2: Vel, 3: VelResolved]");
+	SendText("d              Query Depth");
 	SendText("i              List All Vehicles");
 	SendText("?              This Help");
 }

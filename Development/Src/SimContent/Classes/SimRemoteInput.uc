@@ -30,32 +30,24 @@ event PreProcessInput(float DeltaTime)
 //Resolve remote inputs received from our SimRemoteController
 function ResolveInputs(string Line)
 {
+	local float F;
+
+	F = float(Split(Line, " ", true)) / 100.0;
 	switch (Left(Line, 1)) {
+		//Reserved for testing
+		//Sets a "RandomizeInputs" attract mode to easily test a bunch of agents moving around at once
 		case "p":
-			//Reserved for testing
-			//Sets a "RandomizeInputs" attract mode to easily test a bunch of agents moving around at once
-			if (float(Split(Line, " ", true)) > 0)
+			if (F > 0)
 				SetTimer(3.0 * FRand() + 1.0, true, 'RandomizeInputs');
 			else
 				ClearTimer('RandomizeInputs');
 			break;
-		case "t":
-			aVThrottle = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "s":
-			aVStrafe = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "r":
-			aVRise = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "x":
-			aVYaw = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "y":
-			aVPitch = float(Split(Line, " ", true)) / 100.0;
-			break;
-		case "z":
-			aVRoll = float(Split(Line, " ", true)) / 100.0;
+		case "t": aVThrottle = F; break;
+		case "s": aVStrafe = F; break;
+		case "r": aVRise = F; break;
+		case "x": aVYaw = F; break;
+		case "y": aVPitch = F; break;
+		case "z": aVRoll = F;
 	}
 }
 

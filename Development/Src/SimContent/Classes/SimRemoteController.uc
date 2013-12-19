@@ -10,6 +10,7 @@ function ResolveInputs(SimLinkServerChild LinkAgent, string Line)
 {
 	local SimRemoteInput In;
 	local SimVehicle V;
+	local byte SensorIn;
 
 	//Make sure we have a valid SimRemoteInput
 	In = SimRemoteInput(PlayerInput);
@@ -19,30 +20,41 @@ function ResolveInputs(SimLinkServerChild LinkAgent, string Line)
 	//Send the requested inputs to our input class to resolve
 	In.ResolveInputs(Line);
 
-	//Possibly query info for all vehicles
+	//Query all vehicles?
 	if (Left(Line, 1) == "i") {
-		foreach WorldInfo.AllPawns(class'SimVehicle', V) {
-			LinkAgent.SendText(((V.Controller == Self) ? "* Vehicle" : "  Vehicle") @ V
-				@ "at" @ V.Location
-				@ "rot" @ V.Rotation
-				@ "vel" @ V.Velocity
-				@ "(" $ VSize(V.Velocity) $ ")");
-		}
+		foreach WorldInfo.AllPawns(class'SimVehicle', V)
+			LinkAgent.SendText(((V.Controller == Self) ? "* Vehicle" : "  Vehicle") @ V.QueryInfo());
 		return;
 	}
 
-	//Regardless of input, send info of our vehicle
-	LinkAgent.SendText("* Vehicle" @ Pawn
-		@ "at" @ Pawn.Location
-		@ "rot" @ Pawn.Rotation
-		@ "vel" @ Pawn.Velocity
-		@ "(" $ VSize(Pawn.Velocity) $ ")");
-	LinkAgent.SendText("	-- Throttle" @ In.aVThrottle);
-	LinkAgent.SendText("	-- Strafe  " @ In.aVStrafe);
-	LinkAgent.SendText("	-- Rise    " @ In.aVRise);
-	LinkAgent.SendText("	-- Yaw     " @ In.aVYaw);
-	LinkAgent.SendText("	-- Pitch   " @ In.aVPitch);
-	LinkAgent.SendText("	-- Roll    " @ In.aVRoll);
+	//Regardless of input, send info of our vehicle (this used to be tied to "query" only, but why not?)
+	V = SimVehicle(Pawn);
+	if (V == None)
+		return;
+
+	//Possibly query info - SensorIn will default to 0 if nothing was passed
+	SensorIn = byte(Split(Line, " ", true));
+	switch (Left(Line, 1)) {
+		//Query GPS?
+		case "g":
+			LinkAgent.SendText(V.SensorGPS.Query(SensorIn));
+			return;
+		//Query depth?
+		case "d":
+			LinkAgent.SendText(V.SensorDepth.Query(SensorIn));
+			return;
+		//Query everything?
+		case "q":
+			LinkAgent.SendText(V.QueryInfo());
+
+			//TODO Hack: Also send current input information
+			LinkAgent.SendText("	-- Throttle" @ In.aVThrottle);
+			LinkAgent.SendText("	-- Strafe  " @ In.aVStrafe);
+			LinkAgent.SendText("	-- Rise    " @ In.aVRise);
+			LinkAgent.SendText("	-- Yaw     " @ In.aVYaw);
+			LinkAgent.SendText("	-- Pitch   " @ In.aVPitch);
+			LinkAgent.SendText("	-- Roll    " @ In.aVRoll);
+	}
 }
 
 //Not needed, as all SimRemoteControllers are spawned on the server
