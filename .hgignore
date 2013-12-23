@@ -3,6 +3,7 @@ syntax: glob
 *.lnk
 Binaries
 Development/Flash
+Development/Src
 Engine
 SimContent
 UDKGame/*.txt
